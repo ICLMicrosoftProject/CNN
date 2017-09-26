@@ -12,49 +12,31 @@ import re
 import gzip
 import shutil
 import struct
-
+try: 
+    from urllib.request import urlretrieve 
+except ImportError: 
+    from urllib import urlretrieve
+####################################################Impoet All packages
 ##############Download the dataset
 def report(count, blockSize, totalSize):
   	percent = int(count*blockSize*100/totalSize)
   	sys.stdout.write("\r%d%%" % percent + ' complete')
   	sys.stdout.flush()
 
-#sys.stdout.write('\rFetching ' + name + '...\n')
 
 print("download our datasets")
 urllib.urlretrieve ("http://biometrics.nist.gov/cs_links/EMNIST/gzip.zip", "/tmp/file.zip", reporthook=report)
-#pbar.finish()
-
-
-
-########################
-
-#zip_ref = zipfile.ZipFile('/home/hans/Desktop/CNTKtutorial/CNN/2/gzip.zip', 'r')
-#zip_ref.extractall('/home/hans/Desktop/CNTKtutorial/CNN/2/')
-#zip_ref.close()
-########################
-
-
+#################################################### Download Datasets into tmp
+##############unzip the datast
 
 zip_ref = zipfile.ZipFile('/tmp/file.zip', 'r')
 zip_ref.extractall('/tmp/')
 zip_ref.close()
+##################################################### Unzip all the data sets
 
-
-try: 
-    from urllib.request import urlretrieve 
-except ImportError: 
-    from urllib import urlretrieve
-
-# Config matplotlib for inline plotting
-# Functions to load MNIST images and unpack into train and test set.
-# - loadData reads image data and formats into a 28x28 long array
-# - loadLabels reads the corresponding labels data, 1 for each image
-# - load packs the downloaded image and labels data into a combined format to be read later by 
-#   CNTK text reader 
 
 def loadData(src, cimg):
-    print ('Downloading ' + src)
+    print ('Loading ' + src)
     gzfname, h = urlretrieve(src, './delete.me')
     print ('Done.')
     try:
@@ -78,8 +60,11 @@ def loadData(src, cimg):
         os.remove(gzfname)
     return res.reshape((cimg, crow * ccol))
 
+###############################################Define function for Loading data, where row is 28 and column 28
+###############################################Making sure that the format is correct
+
 def loadLabels(src, cimg):
-    print ('Downloading ' + src)
+    print ('Loading ' + src)
     gzfname, h = urlretrieve(src, './delete.me')
     print ('Done.')
     try:
@@ -98,36 +83,32 @@ def loadLabels(src, cimg):
         os.remove(gzfname)
     return res.reshape((cimg, 1))
 
-def try_download(dataSrc, labelsSrc, cimg):
+
+######################################################
+
+def try_readout(dataSrc, labelsSrc, cimg):
     data = loadData(dataSrc, cimg)
     labels = loadLabels(labelsSrc, cimg)
     return np.hstack((data, labels))
 
-#url_train_image = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
-url_train_image = '/tmp/gzip/emnist-byclass-train-images-idx3-ubyte.gz'
 
+#################################
+url_train_image = '/tmp/gzip/emnist-byclass-train-images-idx3-ubyte.gz'
 url_train_labels = '/tmp/gzip/emnist-byclass-train-labels-idx1-ubyte.gz'
 num_train_samples = 697932
-
-
-print("Downloading train data")
-train = try_download(url_train_image, url_train_labels, num_train_samples)
-
+train = try_readout(url_train_image, url_train_labels, num_train_samples)
 url_test_image = '/tmp/gzip/emnist-byclass-test-images-idx3-ubyte.gz'
 url_test_labels = '/tmp/gzip/emnist-byclass-test-labels-idx1-ubyte.gz'
 num_test_samples = 116323
+test = try_readout(url_test_image, url_test_labels, num_test_samples)
 
-print("Downloading test data")
-test = try_download(url_test_image, url_test_labels, num_test_samples)
 
-# Plot a random image
-sample_number = 5001
+sample_number = 501
 plt.imshow(train[sample_number,:-1].reshape(28,28), cmap="gray_r")
 plt.show()
 plt.axis('off')
 print("Image Label: ", train[sample_number,-1])
 
-# Save the data files into a format compatible with CNTK text reader
 def savetxt(filename, ndarray):
     with open(filename, 'w') as f:
         labels = list(map(' '.join, np.eye(62, dtype=np.uint).astype(str)))
@@ -144,5 +125,3 @@ savetxt( "/tmp/gzip/Train-28x28_cntk_text.txt", train)
 
 print ('Writing test text file...')
 savetxt("/tmp/gzip/Test-28x28_cntk_text.txt", test)
-
-print('Done with data loader')
