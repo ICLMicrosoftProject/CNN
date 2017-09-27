@@ -1,3 +1,3 @@
 # CNN
 Execute EMNISTloader.py
-before performing CNN
+before running CNN_EMNIST.py
